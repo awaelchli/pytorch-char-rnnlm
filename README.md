@@ -15,5 +15,5 @@ For training, use
 
 For sampling, use
 ```bash
-./sample.py --hps-file hps.json --nb-words 1000
+./sample.py --hps-file hps.json --nb-words 1000 --temperature 1.0
 ```
