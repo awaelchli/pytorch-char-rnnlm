@@ -9,6 +9,7 @@ from torch.autograd import Variable
 
 import data
 
+#pylint:disable=redefined-builtin,no-member
 
 def load(hps):
     vocab = data.Vocab.load(hps['vocab_file'])
@@ -17,7 +18,7 @@ def load(hps):
     return {'m': m, 'vocab': vocab, 'ntokens': ntokens, 'hps': hps}
 
 
-def sample(nb_words, temperature, ctx):
+def sample(nb_chars, temperature, ctx):
     m = ctx['m']
     vocab = ctx['vocab']
     ntokens = ctx['ntokens']
@@ -31,7 +32,7 @@ def sample(nb_words, temperature, ctx):
         input.data = input.data.cuda()
 
     words = []
-    for i in range(nb_words):
+    for _ in range(nb_chars):
         output, hidden = m(input, hidden)
         word_weights = output.squeeze().data.div(temperature).exp().cpu()
         word_idx = torch.multinomial(word_weights, 1)[0]
@@ -58,16 +59,16 @@ def main():
         description='PyTorch Language Model (sampling)')
     parser.add_argument('--hps-file', type=str, required=True,
                         help='location of hyper parameter json file.')
-    parser.add_argument('--nb-words', type=int, default=100,
-                        help='Number of words to sample.')
-    parser.add_argument('--temperature', type=float, default=0.7,
+    parser.add_argument('--nb-chars', type=int, default=100,
+                        help='Number of characters to sample.')
+    parser.add_argument('--temperature', type=float, default=0.9,
                         help='Temperature for sampling. Higher values means higher diversity.')
 
     args = parser.parse_args()
     hps = json.load(open(args.hps_file))
 
     ctx = load(hps)
-    words = sample(nb_words=args.nb_words,
+    words = sample(nb_chars=args.nb_chars,
                    temperature=args.temperature, ctx=ctx)
     print_words(words)
 

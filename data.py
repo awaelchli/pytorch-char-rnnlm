@@ -1,12 +1,21 @@
 import codecs
 import json
+import os
 
 import torch
 
 
+def _load_corpus(path):
+    if path.endswith('.json'):
+        corpus = json.load(open(path))
+    else:
+        corpus = [_.strip('\r\n') for _ in open(path).readlines()]
+    return corpus
+
+
 class Corpus(object):
     def __init__(self, path):
-        _corpus = json.load(open(path))
+        _corpus = _load_corpus(path)
 
         self.sents = []
         for s in _corpus:
@@ -16,7 +25,7 @@ class Corpus(object):
         s = set(c for s in self.sents for c in s)
         return list(sorted(list(s)))
 
-    def tokenize(self, vocab, split=0.9):
+    def tokenize(self, vocab):
         tokens = 0
         for s in self.sents:
             tokens += len(s)
@@ -29,16 +38,12 @@ class Corpus(object):
                 ids[token] = vocab.char_to_idx[w]
                 token += 1
 
-        split_point = int(tokens * split)
-        self.train_ids = ids[:split_point]
-        self.eval_ids = ids[split_point:]
-
-
 class Vocab(object):
     def __init__(self, char_list=None):
         if char_list is None:
             char_list = []
 
+        char_list = list(sorted(list(set(char_list))))
         self.char_list = list(char_list)
         self._build()
 
@@ -51,12 +56,9 @@ class Vocab(object):
         return len(self.char_list)
 
     def save(self, filepath):
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with codecs.open(filepath, 'w', encoding='utf-8') as f:
             json.dump(self.char_list, f, indent=4, ensure_ascii=False)
-
-    def load(self, filepath):
-        self.char_list = json.load(open(filepath))
-        self._build()
 
     @staticmethod
     def load(filepath):

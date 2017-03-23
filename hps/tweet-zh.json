@@ -1,0 +1,19 @@
+{
+    "train_corpus": "../pytorch-char-rnnlm-data/tweet-zh/cooked_train.json",
+    "eval_corpus": "../pytorch-char-rnnlm-data/tweet-zh/cooked_eval.json",
+    "test_corpus": "",
+    "vocab_file": "./model/tweet-zh/vocab_file.json",
+    "save": "./model/tweet-zh/pytorchmodel",
+    "emsize": 200,
+    "nhid": 200,
+    "nlayers": 2,
+    "dropout": 0.5,
+    "tied": true,
+    "batch_size": 20,
+    "bptt": 35,
+    "clip": 0.25,
+    "log_interval": 600,
+    "lr": 100.0,
+    "epochs": 100,
+    "cuda": true
+}

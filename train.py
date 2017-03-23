@@ -2,6 +2,7 @@
 import argparse
 import json
 import math
+import os
 import time
 
 import torch
@@ -10,6 +11,7 @@ from torch.autograd import Variable
 import data
 import model
 
+#pylint:disable=redefined-outer-name
 
 def batchify(data, bsz, cuda=False):
     # Work out how cleanly we can divide the dataset into bsz parts.
@@ -26,7 +28,7 @@ def batchify(data, bsz, cuda=False):
 def repackage_hidden(h):
     # pylint:disable=line-too-long
     """Wraps hidden states in new Variables, to detach them from their history."""
-    if type(h) == Variable:
+    if isinstance(h, Variable):
         return Variable(h.data)
     else:
         return tuple(repackage_hidden(v) for v in h)
@@ -99,13 +101,18 @@ def train_epoch(model, criterion, train_data, vocab, hps, lr, epoch):
 
 
 def train(hps):
-    corpus = data.Corpus(hps['corpus'])
+    train_corpus = data.Corpus(hps['train_corpus'])
+    eval_corpus = data.Corpus(hps['eval_corpus'])
+    char_list = train_corpus.export_char_list() + eval_corpus.export_char_list()
+    if hps['test_corpus']:
+        char_list += data.Corpus(hps['test_corpus']).export_char_list()
 
-    vocab = data.Vocab(corpus.export_char_list())
+    vocab = data.Vocab(char_list)
     vocab.save(hps['vocab_file'])
     vocab = data.Vocab.load(hps['vocab_file'])
 
-    corpus.tokenize(vocab)
+    train_corpus.tokenize(vocab)
+    eval_corpus.tokenize(vocab)
 
     ntokens = vocab.size()
     m = model.RNNModel(
@@ -120,8 +127,8 @@ def train(hps):
 
     criterion = torch.nn.CrossEntropyLoss()
 
-    train_data = batchify(corpus.train_ids, hps['batch_size'], hps['cuda'])
-    eval_data = batchify(corpus.eval_ids, hps['batch_size'], hps['cuda'])
+    train_data = batchify(train_corpus.ids, hps['batch_size'], hps['cuda'])
+    eval_data = batchify(eval_corpus.ids, hps['batch_size'], hps['cuda'])
 
     lr = hps['lr']
     best_val_loss = None
@@ -143,6 +150,7 @@ def train(hps):
             # Save the model if the validation loss is the best we've seen so
             # far.
             if not best_val_loss or val_loss < best_val_loss:
+                os.makedirs(os.path.dirname(hps['save']), exist_ok=True)
                 with open(hps['save'], 'wb') as f:
                     torch.save(m, f)
                 best_val_loss = val_loss
@@ -164,6 +172,6 @@ def main():
     hps = json.load(open(args.hps_file))
     train(hps)
 
+
 if __name__ == '__main__':
     main()
-
