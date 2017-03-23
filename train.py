@@ -11,7 +11,8 @@ from torch.autograd import Variable
 import data
 import model
 
-#pylint:disable=redefined-outer-name
+# pylint:disable=redefined-outer-name
+
 
 def batchify(data, bsz, cuda=False):
     # Work out how cleanly we can divide the dataset into bsz parts.
@@ -91,7 +92,7 @@ def train_epoch(model, criterion, train_data, vocab, hps, lr, epoch):
             elapsed = time.time() - start_time
             print(
                 '| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                'loss {:5.2f} | ppl {:8.2f}'.format(
+                'loss {:5.2f} | ppl {:14.8f}'.format(
                     epoch, batch,
                     len(train_data) // hps['bptt'], lr,
                     elapsed * 1000 / hps['log_interval'], cur_loss,
@@ -134,19 +135,19 @@ def train(hps):
     best_val_loss = None
 
     # At any point you can hit Ctrl + C to break out of training early.
-    print('-' * 89)
+    print('-' * 95)
     try:
         for epoch in range(1, hps['epochs'] + 1):
             epoch_start_time = time.time()
             train_epoch(m, criterion, train_data, vocab, hps, lr, epoch)
             val_loss = evaluate(m, criterion, eval_data, vocab, hps)
-            print('-' * 89)
+            print('-' * 95)
             print(
                 '| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                'valid ppl {:8.2f}'.format(
+                'valid ppl {:14.8f}'.format(
                     epoch, (time.time() - epoch_start_time), val_loss,
                     math.exp(val_loss)))
-            print('-' * 89)
+            print('-' * 95)
             # Save the model if the validation loss is the best we've seen so
             # far.
             if not best_val_loss or val_loss < best_val_loss:

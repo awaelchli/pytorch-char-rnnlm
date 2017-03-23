@@ -1,0 +1,19 @@
+{
+    "train_corpus": "../pytorch-char-rnnlm-data/wikitext/wikitext-103-raw/wiki.train.raw",
+    "eval_corpus": "../pytorch-char-rnnlm-data/wikitext/wikitext-103-raw/wiki.valid.raw",
+    "test_corpus": "../pytorch-char-rnnlm-data/wikitext/wikitext-103-raw/wiki.test.raw",
+    "vocab_file": "./model/wikitext-103-raw/vocab_file.json",
+    "save": "./model/wikitext-103-raw/pytorchmodel",
+    "emsize": 200,
+    "nhid": 200,
+    "nlayers": 2,
+    "dropout": 0.5,
+    "tied": true,
+    "batch_size": 200,
+    "bptt": 35,
+    "clip": 0.25,
+    "log_interval": 600,
+    "lr": 3.0,
+    "epochs": 10,
+    "cuda": true
+}
