@@ -15,5 +15,5 @@ For training, use
 
 For sampling, use
 ```bash
-./sample.py --hps-file hps/penn.json --nb-chars 1000 --temperature 1.0
+./sample.py --hps-file hps/penn.json --nb-tokens 1000 --temperature 1.0
 ```

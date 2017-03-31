@@ -102,13 +102,16 @@ def train_epoch(model, criterion, train_data, vocab, hps, lr, epoch):
 
 
 def train(hps):
-    train_corpus = data.Corpus(hps['train_corpus'])
-    eval_corpus = data.Corpus(hps['eval_corpus'])
-    char_list = train_corpus.export_char_list() + eval_corpus.export_char_list()
+    train_corpus = data.Corpus(hps['train_corpus'], hps['tokenization'])
+    eval_corpus = data.Corpus(hps['eval_corpus'], hps['tokenization'])
+    token_list = train_corpus.export_token_list() + eval_corpus.export_token_list()
     if hps['test_corpus']:
-        char_list += data.Corpus(hps['test_corpus']).export_char_list()
+        test_corpus = data.Corpus(hps['test_corpus'], hps['tokenization'])
+        token_list += test_corpus.export_token_list()
+    else:
+        test_corpus = None
 
-    vocab = data.Vocab(char_list)
+    vocab = data.Vocab(token_list)
     vocab.save(hps['vocab_file'])
     vocab = data.Vocab.load(hps['vocab_file'])
 
@@ -130,6 +133,11 @@ def train(hps):
 
     train_data = batchify(train_corpus.ids, hps['batch_size'], hps['cuda'])
     eval_data = batchify(eval_corpus.ids, hps['batch_size'], hps['cuda'])
+    if test_corpus is not None:
+        test_corpus.tokenize(vocab)
+        test_data = batchify(test_corpus.ids, hps['batch_size'], hps['cuda'])
+    else:
+        test_data = None
 
     lr = hps['lr']
     best_val_loss = None
@@ -147,6 +155,11 @@ def train(hps):
                 'valid ppl {:14.8f}'.format(
                     epoch, (time.time() - epoch_start_time), val_loss,
                     math.exp(val_loss)))
+            if test_data is not None:
+                test_loss = evaluate(m, criterion, test_data, vocab, hps)
+                print(
+                    '|                                  |  test loss {:5.2f} | '
+                    ' test ppl {:14.8f}'.format(test_loss, math.exp(test_loss)))
             print('-' * 95)
             # Save the model if the validation loss is the best we've seen so
             # far.

@@ -2,6 +2,7 @@
     "train_corpus": "../pytorch-char-rnnlm-data/wikitext/wikitext-103-raw/wiki.train.raw",
     "eval_corpus": "../pytorch-char-rnnlm-data/wikitext/wikitext-103-raw/wiki.valid.raw",
     "test_corpus": "../pytorch-char-rnnlm-data/wikitext/wikitext-103-raw/wiki.test.raw",
+    "tokenization": "char",
     "vocab_file": "./model/wikitext-103-raw/vocab_file.json",
     "save": "./model/wikitext-103-raw/pytorchmodel",
     "emsize": 200,
