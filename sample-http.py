@@ -25,13 +25,27 @@ def f():
         sep = ' '
     elif hps['tokenization'] == 'char':
         sep = ''
-    first_sent_words = []
+
+    sents = []
+    sent = []
+
     for i, word in enumerate(words):
         if word == '<eos>' or i == len(words) - 1:
-            break
-        first_sent_words.append(word)
-    sent = sep.join(first_sent_words)
-    data = {'sent': sent}
+            sents.append(sent)
+            if len(sents) >= args.max_sents:
+                break
+        sent.append(word)
+
+    sents = [sep.join(sent) for sent in sents]
+
+    puncts = set('，。！:!,.')
+    sents = [
+        sent + '' if (len(sent) > 0 and sent[-1] not in puncts) else sent
+        for sent in sents
+    ]
+
+    result = ''.join(sents)
+    data = {'sent': result}
 
     return json.dumps(data, ensure_ascii=False)
 
@@ -45,6 +59,8 @@ def main():
                         help='Number of characters to sample.')
     parser.add_argument('--temperature', type=float, default=0.9,
                         help='Temperature for sampling. Higher values means higher diversity.')
+    parser.add_argument('--max-sents', type=int, default=1,
+                        help='Maximal number of sentences, if there are at least so many.')
     parser.add_argument('--host', type=str, default='localhost',
                         help='host to bind.')
     parser.add_argument('--port', type=int, default=10000,
@@ -53,7 +69,7 @@ def main():
     args = parser.parse_args()
     hps = json.load(open(args.hps_file))
     hps['cuda'] = False  # force overloading
-  
+
     ctx = sample.load(hps)
     ctx['stop_at'] = '<eos>'
 
