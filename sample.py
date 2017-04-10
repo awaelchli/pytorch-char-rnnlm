@@ -42,6 +42,10 @@ def sample(nb_tokens, temperature, ctx):
 
         words.append(word)
 
+        if ctx.get('stop_at', None) is not None:
+            if word == ctx['stop_at']:
+                break
+
     return words
 
 

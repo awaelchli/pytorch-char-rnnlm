@@ -1,6 +1,6 @@
 {
-    "train_corpus": "../pytorch-char-rnnlm-data/tweet-zh/cooked_train.json",
-    "eval_corpus": "../pytorch-char-rnnlm-data/tweet-zh/cooked_eval.json",
+    "train_corpus": "../pytorch-char-rnnlm-data/tweet-zh/cooked_train.txt",
+    "eval_corpus": "../pytorch-char-rnnlm-data/tweet-zh/cooked_eval.txt",
     "test_corpus": "",
     "tokenization": "char",
     "vocab_file": "./model/tweet-zh/vocab_file.json",
