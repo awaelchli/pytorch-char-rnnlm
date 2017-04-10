@@ -64,7 +64,7 @@ def main():
     global_blob['ctx'] = ctx
     global_blob['hps'] = hps
 
-    run(host=args.host, port=args.port)
+    run(host=args.host, port=args.port, debug=False)
 
 
 if __name__ == '__main__':
