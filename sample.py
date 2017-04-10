@@ -14,7 +14,10 @@ import data
 
 def load(hps):
     vocab = data.Vocab.load(hps['vocab_file'])
-    m = torch.load(hps['save'])
+    if hps['cuda']:
+        m = torch.load(hps['save'] + '.gpu')
+    else:
+        m = torch.load(hps['save'] + '.cpu')
     ntokens = vocab.size()
     return {'m': m, 'vocab': vocab, 'ntokens': ntokens, 'hps': hps}
 
@@ -75,6 +78,7 @@ def main():
 
     args = parser.parse_args()
     hps = json.load(open(args.hps_file))
+    hps['cuda'] = False
 
     ctx = load(hps)
     words = sample(nb_tokens=args.nb_tokens,

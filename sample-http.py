@@ -52,7 +52,8 @@ def main():
 
     args = parser.parse_args()
     hps = json.load(open(args.hps_file))
-
+    hps['cuda'] = False  # force overloading
+  
     ctx = sample.load(hps)
     ctx['stop_at'] = '<eos>'
 

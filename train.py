@@ -165,8 +165,16 @@ def train(hps):
             # far.
             if not best_val_loss or val_loss < best_val_loss:
                 os.makedirs(os.path.dirname(hps['save']), exist_ok=True)
-                with open(hps['save'], 'wb') as f:
-                    torch.save(m, f)
+                if hps['cuda']:
+                    with open(hps['save'] + '.gpu', 'wb') as f:
+                        torch.save(m, f)
+                    m.cpu()
+                    with open(hps['save'] + '.cpu', 'wb') as f:
+                        torch.save(m, f)
+                    m.cuda()
+                else:
+                    with open(hps['save'] + '.cpu', 'wb') as f:
+                        torch.save(m, f)
                 best_val_loss = val_loss
             else:
                 # Anneal the learning rate if no improvement has been seen in
