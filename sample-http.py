@@ -8,10 +8,31 @@ from bottle import route, run
 
 import sample
 
+parser = argparse.ArgumentParser(
+    description='PyTorch Language Model (sampling, hosted as http server)')
+parser.add_argument('--hps-file', type=str, required=True,
+                    help='location of hyper parameter json file.')
+parser.add_argument('--nb-tokens', type=int, default=100,
+                    help='Number of characters to sample.')
+parser.add_argument('--temperature', type=float, default=0.9,
+                    help='Temperature for sampling. Higher values means higher diversity.')
+parser.add_argument('--max-sents', type=int, default=1,
+                    help='Maximal number of sentences, if there are at least so many.')
+parser.add_argument('--host', type=str, default='localhost',
+                    help='host to bind.')
+parser.add_argument('--port', type=int, default=10000,
+                    help='Port for serving sampling')
+parser.add_argument('--prefix', type=str, default='sample',
+                    help='prefix for accessing')
+
+
+args = parser.parse_args()
+
+
 global_blob = {}
 
 
-@route('/sample')
+@route('/' + args.prefix)
 def f():
     args = global_blob['args']
     ctx = global_blob['ctx']
@@ -54,22 +75,7 @@ def f():
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='PyTorch Language Model (sampling, hosted as http server)')
-    parser.add_argument('--hps-file', type=str, required=True,
-                        help='location of hyper parameter json file.')
-    parser.add_argument('--nb-tokens', type=int, default=100,
-                        help='Number of characters to sample.')
-    parser.add_argument('--temperature', type=float, default=0.9,
-                        help='Temperature for sampling. Higher values means higher diversity.')
-    parser.add_argument('--max-sents', type=int, default=1,
-                        help='Maximal number of sentences, if there are at least so many.')
-    parser.add_argument('--host', type=str, default='localhost',
-                        help='host to bind.')
-    parser.add_argument('--port', type=int, default=10000,
-                        help='Port for serving sampling')
-
-    args = parser.parse_args()
+    global args
     hps = json.load(open(args.hps_file))
     hps['cuda'] = False  # force overloading
 
