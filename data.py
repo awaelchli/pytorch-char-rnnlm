@@ -5,11 +5,15 @@ import os
 import torch
 
 
-def _load_corpus(path):
-    if path.endswith('.json'):
-        corpus = json.load(open(path))
+def _load_json_utf8(filepath):
+    return json.loads(open(filepath, 'rb').read().decode("utf-8"))
+
+
+def _load_corpus(filepath):
+    if filepath.endswith('.json'):
+        corpus = _load_json_utf8(filepath)
     else:
-        corpus = [_.strip('\r\n') for _ in open(path).readlines()]
+        corpus = [_.strip('\r\n') for _ in open(filepath).readlines()]
     return corpus
 
 
@@ -68,5 +72,5 @@ class Vocab(object):
 
     @staticmethod
     def load(filepath):
-        token_list = json.load(open(filepath))
+        token_list = _load_json_utf8(filepath)
         return Vocab(token_list)
