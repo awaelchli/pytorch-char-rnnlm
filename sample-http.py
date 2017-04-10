@@ -37,6 +37,10 @@ def f():
     args = global_blob['args']
     ctx = global_blob['ctx']
     hps = global_blob['hps']
+
+    max_sents = random.randint(1, args.max_sents)
+    ctx['count_stop_at'] = max_sents
+
     words = sample.sample(
         nb_tokens=args.nb_tokens,
         temperature=args.temperature,
@@ -48,7 +52,6 @@ def f():
     elif hps['tokenization'] == 'char':
         sep = ''
 
-    max_sents = random.randint(1, args.max_sents)
     sents = []
     sent = []
 

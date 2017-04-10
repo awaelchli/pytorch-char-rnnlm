@@ -36,6 +36,7 @@ def sample(nb_tokens, temperature, ctx):
         input.data = input.data.cuda()
 
     words = []
+    count_stop_at = 0
     for _ in range(nb_tokens):
         output, hidden = m(input, hidden)
         word_weights = output.squeeze().data.div(temperature).exp().cpu()
@@ -47,7 +48,9 @@ def sample(nb_tokens, temperature, ctx):
 
         if ctx.get('stop_at', None) is not None:
             if word == ctx['stop_at']:
-                break
+                count_stop_at += 1
+                if count_stop_at >= (ctx.get('max_stop_at', 1)):
+                    break
 
     return words
 
