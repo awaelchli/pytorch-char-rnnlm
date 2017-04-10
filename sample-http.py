@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import random
 
 from bottle import route, run
 
@@ -26,13 +27,15 @@ def f():
     elif hps['tokenization'] == 'char':
         sep = ''
 
+    max_sents = random.randint(1, args.max_sents)
     sents = []
     sent = []
 
     for i, word in enumerate(words):
         if word == '<eos>' or i == len(words) - 1:
             sents.append(sent)
-            if len(sents) >= args.max_sents:
+            sent = []
+            if len(sents) >= max_sents:
                 break
         sent.append(word)
 
@@ -71,7 +74,6 @@ def main():
     hps['cuda'] = False  # force overloading
 
     ctx = sample.load(hps)
-    ctx['stop_at'] = '<eos>'
 
     # pylint:disable=global-statement
     global global_blob
