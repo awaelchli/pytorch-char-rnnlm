@@ -3,93 +3,54 @@
 import argparse
 import json
 import random
+import os
 
 from bottle import route, run
 
 import sample
-
-parser = argparse.ArgumentParser(
-    description='PyTorch Language Model (sampling, hosted as http server)')
-parser.add_argument('--hps-file', type=str, required=True,
-                    help='location of hyper parameter json file.')
-parser.add_argument('--nb-tokens', type=int, default=100,
-                    help='Number of characters to sample.')
-parser.add_argument('--temperature', type=float, default=0.9,
-                    help='Temperature for sampling. Higher values means higher diversity.')
-parser.add_argument('--max-sents', type=int, default=1,
-                    help='Maximal number of sentences, if there are at least so many.')
-parser.add_argument('--host', type=str, default='localhost',
-                    help='host to bind.')
-parser.add_argument('--port', type=int, default=10000,
-                    help='Port for serving sampling')
-parser.add_argument('--prefix', type=str, default='sample',
-                    help='prefix for accessing')
-
-
-args = parser.parse_args()
-
-
 global_blob = {}
 
+def json_dumps(obj):
+    return json.dumps(obj, ensure_ascii=False)
 
-@route('/' + args.prefix)
-def f():
-    args = global_blob['args']
-    ctx = global_blob['ctx']
-    hps = global_blob['hps']
+@route('/sample/<signature>')
+def f(signature):
+    if signature not in global_blob:
+        return json_dump({'success': False, 'sent': ''})
 
-    max_sents = random.randint(1, args.max_sents)
-    ctx['count_stop_at'] = max_sents
+    sampler = global_blob[signature]
 
-    words = sample.sample(
-        nb_tokens=args.nb_tokens,
-        temperature=args.temperature,
-        ctx=ctx
-    )
+    max_sents = random.randint(1, sampler.sampler_hps['max_sents'],)
+    words = sampler.sample(max_sents=max_sents)
+    sent = sampler.join(words)
 
-    if hps['tokenization'] == 'word':
-        sep = ' '
-    elif hps['tokenization'] == 'char':
-        sep = ''
-
-    sents = []
-    sent = []
-
-    for i, word in enumerate(words):
-        if word == '<eos>' or i == len(words) - 1:
-            sents.append(sent)
-            sent = []
-            if len(sents) >= max_sents:
-                break
-        sent.append(word)
-
-    sents = [sep.join(sent) for sent in sents]
-
-    puncts = set('，。！:!,.')
-    sents = [
-        sent + '' if (len(sent) > 0 and sent[-1] not in puncts) else sent
-        for sent in sents
-    ]
-
-    result = ''.join(sents)
-    data = {'sent': result}
-
-    return json.dumps(data, ensure_ascii=False)
+    data = {'sent': sent, 'success': True}
+    return json_dump(data)
 
 
 def main():
-    global args
-    hps = json.load(open(args.hps_file))
-    hps['cuda'] = False  # force overloading
 
-    ctx = sample.load(hps)
+    parser = argparse.ArgumentParser(
+        description='PyTorch Language Model (sampling, hosted as http server)')
+    parser.add_argument(
+        '--sampler-hps-file',
+        type=str, required=True,
+        action='append',
+        help='location of sampler\'s hyper parameter json file. Can be specified for many times.'
+    )
+    parser.add_argument('--host', type=str, default='localhost',
+                        help='host to bind.')
+    parser.add_argument('--port', type=int, default=10000,
+                        help='Port for serving sampling')
 
-    # pylint:disable=global-statement
-    global global_blob
-    global_blob = {}
-    global_blob['args'] = args
-    global_blob['ctx'] = ctx
-    global_blob['hps'] = hps
+    args = parser.parse_args()
+
+    for this_sampler_hps_file in args.sampler_hps_file:
+        sampler_hps = json.load(open(this_sampler_hps_file))
+        sampler = sample.Sampler(sampler_hps)
+        signature = os.path.basename(this_sampler_hps_file).split('.')[0]
+        global_blob[signature] = sampler
+        print('%s <- %s' % (signature, this_sampler_hps_file))
 
     run(host=args.host, port=args.port, debug=False)
 

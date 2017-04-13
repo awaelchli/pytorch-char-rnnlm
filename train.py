@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+# pylint:disable=too-many-statements
+
 import argparse
 import json
 import math

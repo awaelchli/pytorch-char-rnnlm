@@ -1,0 +1,20 @@
+{
+    "train_corpus": "../pytorch-char-rnnlm-data/jinyong/train.txt",
+    "eval_corpus": "../pytorch-char-rnnlm-data/jinyong/eval.txt",
+    "test_corpus": "",
+    "tokenization": "char",
+    "vocab_file": "./model/jinyong/vocab_file.json",
+    "save": "./model/jinyong/pytorchmodel",
+    "emsize": 200,
+    "nhid": 200,
+    "nlayers": 2,
+    "dropout": 0.5,
+    "tied": true,
+    "batch_size": 128,
+    "bptt": 40,
+    "clip": 0.25,
+    "log_interval": 600,
+    "lr": 5.0,
+    "epochs": 60,
+    "cuda": true
+}
