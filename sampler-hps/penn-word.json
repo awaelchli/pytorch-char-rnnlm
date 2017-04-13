@@ -1,7 +1,7 @@
 {
-    "hps_file": "./hps/penn.json",
+    "hps_file": "./hps/penn-word.json",
     "max_sents": 3,
-    "nb_tokens": 500,
+    "nb_tokens": 100,
     "temperature": 0.8,
     "sents_join_char": ""
 }
