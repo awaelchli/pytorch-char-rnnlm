@@ -1,0 +1,7 @@
+{
+    "hps_file": "./hps/penn.json",
+    "max_sents": 3,
+    "nb_tokens": 100,
+    "temperature": 0.8,
+    "sents_join_char": ""
+}
