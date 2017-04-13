@@ -10,13 +10,15 @@ from bottle import route, run
 import sample
 global_blob = {}
 
+
 def json_dumps(obj):
     return json.dumps(obj, ensure_ascii=False)
+
 
 @route('/sample/<signature>')
 def f(signature):
     if signature not in global_blob:
-        return json_dump({'success': False, 'sent': ''})
+        return json_dumps({'success': False, 'sent': ''})
 
     sampler = global_blob[signature]
 
@@ -25,7 +27,7 @@ def f(signature):
     sent = sampler.join(words)
 
     data = {'sent': sent, 'success': True}
-    return json_dump(data)
+    return json_dumps(data)
 
 
 def main():
@@ -33,14 +35,14 @@ def main():
     parser = argparse.ArgumentParser(
         description='PyTorch Language Model (sampling, hosted as http server)')
     parser.add_argument(
-        '--sampler-hps-file',
+        '-f', '--sampler-hps-file',
         type=str, required=True,
         action='append',
         help='location of sampler\'s hyper parameter json file. Can be specified for many times.'
     )
     parser.add_argument('--host', type=str, default='localhost',
                         help='host to bind.')
-    parser.add_argument('--port', type=int, default=10000,
+    parser.add_argument('-p', '--port', type=int, default=10000,
                         help='Port for serving sampling')
 
     args = parser.parse_args()
