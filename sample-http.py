@@ -5,7 +5,7 @@ import json
 import random
 import os
 
-from bottle import route, run
+from bottle import route, run, response
 
 import sample
 global_blob = {}
@@ -17,6 +17,8 @@ def json_dumps(obj):
 
 @route('/sample/<signature>')
 def f(signature):
+    response.set_header('Access-Control-Allow-Origin', '*')
+
     if signature not in global_blob:
         return json_dumps({'success': False, 'sent': ''})
 
