@@ -1,0 +1,20 @@
+{
+    "train_corpus": "../pytorch-char-rnnlm-data/akb/akb.train.txt",
+    "eval_corpus": "../pytorch-char-rnnlm-data/akb/akb.test.txt",
+    "test_corpus": "",
+    "tokenization": "char",
+    "vocab_file": "./model/akb/vocab_file.json",
+    "save": "./model/akb/pytorchmodel",
+    "emsize": 1024,
+    "nhid": 1024,
+    "nlayers": 2,
+    "dropout": 0.7,
+    "tied": true,
+    "batch_size": 128,
+    "bptt": 35,
+    "clip": 0.25,
+    "log_interval": 600,
+    "lr": 5.0,
+    "epochs": 40,
+    "cuda": true
+}

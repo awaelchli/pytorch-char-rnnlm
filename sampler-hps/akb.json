@@ -1,0 +1,6 @@
+{
+    "hps_file": "./hps/akb.json",
+    "max_sents": 20,
+    "nb_tokens": 200,
+    "temperature": 0.6
+}
