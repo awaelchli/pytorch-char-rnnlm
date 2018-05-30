@@ -39,7 +39,6 @@ class Corpus(object):
         for s in self.sents:
             tokens += len(s)
 
-        # pylint:disable=attribute-defined-outside-init
         self.ids = ids = torch.LongTensor(tokens)
         token = 0
         for s in self.sents:
