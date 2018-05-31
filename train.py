@@ -6,6 +6,7 @@ import math
 import os
 import time
 import torch
+
 import data
 import model
 import helpers
@@ -23,7 +24,6 @@ def batchify(data, bsz, device):
 
 
 def detach_hidden(h):
-    """Wraps hidden states in new Variables, to detach them from their history."""
     if isinstance(h, torch.Tensor):
         return h.detach()
     else:
@@ -52,15 +52,13 @@ def evaluate(model, criterion, data_source, vocab, hps):
     return total_loss / len(data_source)
 
 
-def train_epoch(model, criterion, train_data, vocab, hps, lr, epoch, summary):
+def train_epoch(model, criterion, train_data, vocab, hps, lr, epoch, device, summary):
     model.train()
-    total_loss = 0
     start_time = time.time()
     ntokens = vocab.size()
     n_batches = len(train_data) // hps['bptt']
     hidden = model.init_hidden(hps['batch_size'])
 
-    last_log_batch = 0
     for batch, i in enumerate(range(0, train_data.size(0) - 1, hps['bptt'])):
         data, targets = get_batch(train_data, i, hps['bptt'])
 
@@ -71,33 +69,24 @@ def train_epoch(model, criterion, train_data, vocab, hps, lr, epoch, summary):
         loss.backward()
 
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), hps['clip'])
-        for p in model.parameters():
-            p.data.add_(-lr, p.grad.data)
 
-        total_loss += loss.item()
+        for p in model.parameters():
+            if p.requires_grad:
+                p.data.add_(-lr, p.grad.data)
 
         if (batch % hps['log_interval'] == 0 and batch > 0) or batch == n_batches:
             train_loss = loss.item()
-            #train_loss = total_loss / (batch - last_log_batch)
             train_perp = math.exp(train_loss)
 
-            last_log_batch = batch
-
             elapsed = time.time() - start_time
-            print(
-                '| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                'loss {:5.2f} | ppl {:14.8f}'.format(
-                    epoch, batch,
-                    len(train_data) // hps['bptt'], lr,
-                    elapsed * 1000 / hps['log_interval'], train_loss,
-                   train_perp))
+            ms_per_batch = elapsed * 1000 / hps['log_interval']
+            helpers.log_training(epoch, batch, n_batches, lr, ms_per_batch, train_loss, train_perp)
 
-            step = hps['batch_size'] * helpers.get_num_batches(epoch, n_batches, batch)
+            step = hps['batch_size'] * helpers.get_num_batches_seen(epoch, n_batches, batch)
             summary.add_scalar('TrainingLoss', train_loss, step)
             summary.add_scalar('TrainingPerp', train_perp, step)
             summary.add_scalar('GradientNorm', grad_norm, step)
 
-            total_loss = 0
             start_time = time.time()
 
 
@@ -141,53 +130,49 @@ def train(hps, device, summary):
     lr = hps['lr']
     best_val_loss = None
     n_batches = len(train_data) // hps['bptt']
+    test_loss, test_perp = -1, -1
 
     # At any point you can hit Ctrl + C to break out of training early.
     print('-' * 95)
     try:
         for epoch in range(1, hps['epochs'] + 1):
+
+            # Train for one epoch
             epoch_start_time = time.time()
+            train_epoch(m, criterion, train_data, vocab, hps, lr, epoch, device, summary)
+            elapsed = time.time() - epoch_start_time
+            step = hps['batch_size'] * helpers.get_num_batches_seen(epoch, n_batches, n_batches)
 
-            train_epoch(m, criterion, train_data, vocab, hps, lr, epoch, summary)
-
+            # Evaluate model on validation set
             with torch.no_grad():
                 val_loss = evaluate(m, criterion, eval_data, vocab, hps)
                 val_perp = math.exp(val_loss)
-            print('-' * 95)
-            print(
-                '| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                'valid ppl {:14.8f}'.format(
-                    epoch, (time.time() - epoch_start_time), val_loss,
-                    val_perp))
 
-            step = hps['batch_size'] * helpers.get_num_batches(epoch, n_batches, n_batches)
             summary.add_scalar('ValidationLoss', val_loss, step)
             summary.add_scalar('ValidationPerp', val_perp, step)
 
+            # Evaluate model on test set
             if test_data is not None:
                 with torch.no_grad():
                     test_loss = evaluate(m, criterion, test_data, vocab, hps)
                     test_perp = math.exp(test_loss)
+                    test_bpc = test_loss * math.log2(math.e)
 
                 summary.add_scalar('TestLoss', test_loss, step)
                 summary.add_scalar('TestPerp', test_perp, step)
+                summary.add_scalar('TestBPC', test_bpc, step)
 
-                print(
-                    '|                                 |  test loss {:5.2f} | '
-                    ' test ppl {:14.8f}'.format(test_loss, test_perp))
-            print('-' * 95)
+            helpers.log_end_of_epoch(epoch, elapsed, val_loss, val_perp, test_loss, test_perp)
 
-            # Save the model if the validation loss is the best we've seen so
-            # far.
+            # Save the model if the validation loss is the best we've seen so far.
             if not best_val_loss or val_loss < best_val_loss:
                 os.makedirs(os.path.dirname(hps['save']), exist_ok=True)
-                with open(hps['save'] + '.pt', 'wb') as f:
+                with open(hps['save'], 'wb') as f:
                     torch.save(m, f)
 
                 best_val_loss = val_loss
             else:
-                # Anneal the learning rate if no improvement has been seen in
-                # the validation dataset.
+                # Anneal the learning rate if no improvement has been seen in the validation dataset.
                 lr /= 4
 
             summary.add_scalar('LR', lr, step)
@@ -199,14 +184,16 @@ def train(hps, device, summary):
 
 def main():
     parser = argparse.ArgumentParser(description='PyTorch Language Model')
-    parser.add_argument('hpsfile', type=str,
+    parser.add_argument('hps_file', type=str,
                         help='location of hyper parameter json file.')
 
     args = parser.parse_args()
-    hps = json.load(open(args.hpsfile))
+    hps = json.load(open(args.hps_file))
     device = torch.device(hps['device'] or 'cuda:0')
+
     # Remove log files when re-running
-    shutil.rmtree(hps['log_dir'])
+    if os.path.exists(hps['log_dir']):
+        shutil.rmtree(hps['log_dir'])
 
     summary = tensorboardX.SummaryWriter(hps['log_dir'])
     train(hps, device, summary)
