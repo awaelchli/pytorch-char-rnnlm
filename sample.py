@@ -35,9 +35,7 @@ class Sampler(object):
         hidden = model.init_hidden(1)
 
         input = torch.rand(1, 1).mul(ntokens).long()
-        print(input)
         input.fill_(vocab.char_to_idx['<eos>'])
-        print(input)
         input = input.to(self.device)
 
         chars = []
@@ -52,6 +50,9 @@ class Sampler(object):
             char = vocab.idx_to_char[word_idx]
             chars.append(char)
 
+        # Remove truncated word at the end of the text
+        end = chars[::-1].index(' ')
+        chars = chars[:-end]
         return chars
 
     def join(self, tokens):
