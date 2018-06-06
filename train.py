@@ -129,6 +129,7 @@ def train(hps, device, summary):
 
     lr = hps['lr']
     best_val_loss = None
+    val_loss_not_improved = 0
     n_batches = len(train_data) // hps['bptt']
     test_loss, test_perp = -1, -1
 
@@ -172,8 +173,11 @@ def train(hps, device, summary):
 
                 best_val_loss = val_loss
             else:
-                # Anneal the learning rate if no improvement has been seen in the validation dataset.
-                lr /= 4
+                val_loss_not_improved += 1
+                if val_loss_not_improved == 3:
+                    # Anneal the learning rate if no improvement has been seen in the validation dataset.
+                    lr /= 4
+                    val_loss_not_improved = 0
 
             summary.add_scalar('LR', lr, step)
 
