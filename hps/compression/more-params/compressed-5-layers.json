@@ -1,0 +1,21 @@
+{
+    "train_corpus":     "./data/penn/train_compressed.txt",
+    "eval_corpus":      "./data/penn/valid_compressed.txt",
+    "test_corpus":      "./data/penn/test_compressed.txt",
+    "tokenization":     "char",
+    "emsize":           500,
+    "nhid":             500,
+    "nlayers":          5,
+    "dropout":          0.5,
+    "tied":             true,
+    "batch_size":       100,
+    "bptt":             30,
+    "clip":             1.0,
+    "log_interval":     500,
+    "lr":               3.0,
+    "epochs":           100,
+    "device":           "cuda:1",
+    "log_dir":          "./runs/compressed-5-layers-more-par/",
+    "save":             "./runs/compressed-5-layers-more-par/checkpoint.pt",
+    "vocab_file":       "./runs/compressed-5-layers-more-par/vocab_file.json"
+}
