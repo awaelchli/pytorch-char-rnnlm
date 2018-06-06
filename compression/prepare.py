@@ -5,6 +5,10 @@ def read_text(path):
     with open(path, 'r') as f:
         lines = f.readlines()
 
+    return get_words_from_lines(lines)
+
+
+def get_words_from_lines(lines):
     lines = [l.strip('\r\n') for l in lines]
     lines = [l.split(' ') for l in lines]
 
@@ -15,15 +19,18 @@ def read_text(path):
     return words
 
 
-def top(word_list, n):
+def top(word_list, n, ignore=[]):
     counts = Counter(word_list)
-    total = sum(counts.values())
+
+    for w in ignore:
+        del counts[w]
 
     _common = counts.most_common(n)
     common = [t for t, _ in _common]
 
     # compute relative frequencies
     probs = [c for _, c in _common]
+    total = sum(probs)
     probs = [c / total for c in probs]
 
     return common, probs
@@ -56,13 +63,30 @@ def write_list_to_file(items, path):
             f.write('\n')
 
 
+def read_list_from_file(file):
+    with open(file, 'r') as f:
+        lines = f.readlines()
 
+    lines = [line.strip('\r\n') for line in lines]
+    return lines
+
+
+def read_tuples_from_file(file):
+    with open(file, 'r') as f:
+        lines = f.readlines()
+
+    lines = [tuple(line.strip('\r\n').split(' ')) for line in lines]
+    return lines
 
 if __name__ == '__main__':
     words = read_text('./data/penn/train.txt')
     prefix = 'train_'
     n = 1000
+    ignore = ['<unk>', '']
+
     print('Number of unique words: ', len(unique_words(words)))
+
+    words = [w for w in words if w not in ignore]
 
     # Save a list of the most common words
     top_words, prob1 = top(words, n)
