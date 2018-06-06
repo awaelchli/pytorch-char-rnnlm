@@ -195,6 +195,9 @@ def main():
     hps = json.load(open(args.hps_file))
     device = torch.device(hps['device'] or 'cuda:0')
 
+    # Workaround for cublas error when using dropout on device index > 0
+    torch.cuda.set_device(device.index)
+
     # Remove log files when re-running
     if os.path.exists(hps['log_dir']):
         shutil.rmtree(hps['log_dir'])
